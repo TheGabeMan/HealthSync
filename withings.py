@@ -30,8 +30,8 @@ withings_api = 'https://wbsapi.withings.net/v2'
 ## ConfigFile for withings token and API info
 withings_cfg = 'withings.json'
 
-# fields - set to None to not push them to intervals
-# fields must exist as wellness fields (custom or default)
+## fields - set to None to not push them to intervals
+## fields must exist as wellness fields (custom or default)
 weight_field = 'weight'         # withings weight scales
 bodyfat_field = 'bodyFat'       # withings weight scales
 diastolic_field = None          # withings blood pressure devices (BPM Core, ...) if needed set field to 'diastolic'
