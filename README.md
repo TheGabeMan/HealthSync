@@ -1,5 +1,8 @@
-# HealthSync
 
+Much of this script is based on: https://gist.github.com/fruitloop/7e79eeab9fd4ba7d2be5cdf8175d2267
+By: https://gist.github.com/fruitloop
+
+# HealthSync
 With this Python Script I'm trying to sync my healthdata between severall websites and later on I might add it to my own MySQL DB.
 
 Currently here are two very bare bones scripts:
