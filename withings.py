@@ -1,4 +1,8 @@
 ######################################################
+# Much of this script is based on: https://gist.github.com/fruitloop/7e79eeab9fd4ba7d2be5cdf8175d2267
+# By: https://gist.github.com/fruitloop
+#
+######################################################
 # config section 
 ######################################################
 import os
