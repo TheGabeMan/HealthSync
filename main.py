@@ -42,8 +42,8 @@ def get_api_data(method, url, intervals_api_key ):
 
 ## Load Environment variabelen from .env file
 load_dotenv()
-athlete_id = os.getenv('athlete_id')
-intervals_api_key = os.getenv('intervals_api_key')
+athlete_id = os.getenv('icu_athlete_id')
+intervals_api_key = os.getenv('icu_api_key')
 base_url = 'https://intervals.icu'
 date_today = datetime.date.today()
 

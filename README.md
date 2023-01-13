@@ -5,7 +5,8 @@ By: https://gist.github.com/fruitloop
 # HealthSync
 With this Python Script I'm trying to sync my healthdata between severall websites and later on I might add it to my own MySQL DB.
 
-Currently here are two very bare bones scripts:
+Currently here are three very bare bones scripts:
+- main.py: reading info from intervals.icu
 - withings.py: this will read data from Withings and write wellness data to intervals.icu
 - wahoo.py: this will read user info from Wahoo and as first test it writes the weight back to wahoo
 
