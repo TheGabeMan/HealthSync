@@ -32,11 +32,11 @@ withings_cfg = 'withings.json'
 
 ## fields - set to None to not push them to intervals
 ## fields must exist as wellness fields (custom or default)
-weight_field = 'weight'         # withings weight scales
-bodyfat_field = 'bodyFat'       # withings weight scales
-diastolic_field = None          # withings blood pressure devices (BPM Core, ...) if needed set field to 'diastolic'
-systolic_field = None           # withings blood pressure devices (BPM Core, ...) if needed set field to 'systolic'
-temp_field = None               # when you insert manual temperature readings in the withings app, this should do. If needed set field to 'BodyTemperature'
+weight_field = 'weight'         ## withings weight scales
+bodyfat_field = 'bodyFat'       ## withings weight scales
+diastolic_field = None          ## withings blood pressure devices (BPM Core, ...) if needed set field to 'diastolic'
+systolic_field = None           ## withings blood pressure devices (BPM Core, ...) if needed set field to 'systolic'
+temp_field = None               ## when you insert manual temperature readings in the withings app, this should do. If needed set field to 'BodyTemperature'
 
 ######################################################
 ## Start of Main Script
