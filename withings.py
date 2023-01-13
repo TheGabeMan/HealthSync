@@ -1,6 +1,6 @@
-##################
+######################################################
 # config section #
-##################
+######################################################
 import os
 import sys
 import json
@@ -9,9 +9,9 @@ from requests.auth import HTTPBasicAuth
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-##################
+######################################################
 ## Load .env file and environment settings
-##################
+######################################################
 load_dotenv()
 
 ## intervals.icu api credentials
@@ -38,9 +38,9 @@ diastolic_field = None          # withings blood pressure devices (BPM Core, ...
 systolic_field = None           # withings blood pressure devices (BPM Core, ...) if needed set field to 'systolic'
 temp_field = None               # when you insert manual temperature readings in the withings app, this should do. If needed set field to 'BodyTemperature'
 
-##################
+######################################################
 ## Start of Main Script
-##################
+######################################################
 def main():
     # authorize or refresh
     access_token = refresh(json.load(open(withings_cfg))) if os.path.isfile(withings_cfg) else authenticate()
