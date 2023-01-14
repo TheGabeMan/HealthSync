@@ -71,6 +71,7 @@ def main():
               
     for day, data in sorted(wellness.items()):
         data['id'] = day.strftime('%Y-%m-%d')
+        print('Wellness data:', data )
         set_wellness(data)
 
 def set_wellness(event):
