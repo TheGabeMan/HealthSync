@@ -6,7 +6,7 @@ By: https://gist.github.com/fruitloop
 With this Python Script I'm trying to sync my healthdata between severall websites and later on I might add it to my own MySQL DB.
 
 Currently the only working script is:
-- weightsync.py: this script asks the user for his/her weight and writes the weight to intervals.icu and Wahoo
+- weightsync.py: this script asks the user for his/her weight and writes the weight to intervals.icu, Strava and Wahoo
 
 To make this work, download "weightsync.py" and "env.md". Rename the "env.md" file to ".env", it will become a hidden file.
 Now edit the ".env" file with the values you can find on the developer pages of each company:
