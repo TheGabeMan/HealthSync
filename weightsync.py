@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import requests
+import webbrowser
 from requests.auth import HTTPBasicAuth
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -27,6 +28,13 @@ wahoo_api = 'https://api.wahooligan.com'
 wahoo_cfg = 'wahoo.json'
 wahoo_scopes = 'user_write+email+workouts_read+workouts_write+power_zones_read+power_zones_write+offline_data+user_read'
 
+## Strava api credentials
+strava_athlete_id = os.getenv('strava_athlete_id')
+strava_client_secret = os.getenv('strava_client_secret')
+strava_cfg = 'strava.json'
+strava_url = 'https://www.strava.com/oauth'
+strava_api = 'https://www.strava.com/api/v3'
+
 ######################################################
 ## Start of Main Script
 ######################################################
@@ -37,8 +45,7 @@ def main():
     ## Get Wahoo_access_token or refresh the token
     wahoo_access_token = wahoo_refresh(json.load(open(wahoo_cfg))) if os.path.isfile(wahoo_cfg) else wahoo_authenticate()
     wahoo_user_info = get_wahoo_user( wahoo_access_token)
-    print( wahoo_user_info['id'] )
-    print( 'Retreived userid %s for %s %s' % (wahoo_user_info['id'], wahoo_user_info['first'], wahoo_user_info['last']))
+    print( 'Retreived Wahoo userid %s for %s %s' % (wahoo_user_info['id'], wahoo_user_info['first'], wahoo_user_info['last']))
     set_wahoo_user_weight( wahoo_access_token, user_weight)
 
     ## Write to Intervals.icu
@@ -46,6 +53,10 @@ def main():
     icu_data =  json.loads('{ "weight": %s, "id":"2023-01-14"}' % (user_weight))
     set_icu_wellness(icu_data)
 
+    ## Write to Strava
+    strava_access_token = strava_refresh(json.load(open(strava_cfg))) if os.path.isfile(strava_cfg) else strava_authenticate()
+    strava_user_info = get_strava_user_info( strava_access_token)
+    set_strava_user_weight( strava_access_token, float(user_weight), strava_user_info['id']  )   ## For Strava the user weight must be of type float
 
 def get_wahoo_user( token ):
     url = '%s/v1/user' % wahoo_api
@@ -75,7 +86,6 @@ def wahoo_authenticate():
         }
         print( 'ParamData = ', paramdata)
         res = requests.post('%s/oauth/token' % wahoo_api, params = paramdata )
-        print( '1 ****** ontvangen resultaat ******', res.json() )
         out = res.json()
         if res.status_code == 200:
             json.dump(out, open(wahoo_cfg,'w'))
@@ -116,5 +126,69 @@ def set_icu_wellness(event):
         print(res.json())
     else:
         print('Succesful writing weight to intervals.icu')
+
+def strava_authenticate():
+    if len(sys.argv) > 1:
+        paramdata = {
+            'client_id': strava_athlete_id,
+            'client_secret': strava_client_secret,
+            'code': sys.argv[1],
+            'grant_type': 'authorization_code'
+        }
+        res = requests.post( url = '%s/token' % strava_url, data = paramdata)
+        out = res.json()
+        if res.status_code == 200:
+            json.dump(out, open(strava_cfg,'w'))
+            return out['access_token']
+        else:
+            print('authentication failed:')
+            print(out)
+            exit()
+    else:
+        print("No token found, webbrowser will open, authorize the application and copy paste the code section")
+        url ='%s/authorize?client_id=%s&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=profile:write,read' % ( strava_url, strava_athlete_id)
+        webbrowser.open(url,new=2)
+        ### code = input("Copy the code from the URL: ")
+
+def strava_refresh(data):
+    url = '%s/token' % strava_url
+    res = requests.post(url, params = {
+        'client_id': strava_athlete_id, 
+        'client_secret': strava_client_secret,
+        'action': 'requesttoken', 
+        'grant_type': 'refresh_token',
+        'refresh_token': data['refresh_token'],
+    })
+    out = res.json()
+    if res.status_code == 200:
+        json.dump(out, open(strava_cfg,'w'))
+        return out['access_token']
+    else:
+        print(out)
+        exit()
+
+def get_strava_user_info( token):
+    url = '%s/athlete' % strava_api
+    headers = {'Authorization': 'Bearer %s' % token}
+    res = requests.get( url, headers=headers)
+    if res.status_code != 200:
+        print("There was an error reading from Strava API:")
+        print( res.json())
+    else:
+        print("Succesful reading from Strava API")
+        return res.json()
+
+def set_strava_user_weight( token, weight, user_id):
+    url = '%s/athlete' % strava_api
+    headers = {'Authorization': 'Bearer %s' % token}
+    data = { 'weight': weight, 'id':user_id}
+    ## data = {'user[weight]':'%s' % weight}
+    res = requests.put( url, headers=headers, data=data)
+    if res.status_code != 200:
+        print("There was an error writing to Strava API:")
+        print( res.json())
+    else:
+        print("Succesful writing weight to Strava API")
+
 
 if __name__ == '__main__': exit(main())
