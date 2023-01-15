@@ -40,8 +40,11 @@ strava_api = 'https://www.strava.com/api/v3'
 ######################################################
 def main():
 
-    user_weight = input("What is your current weight? ")
-    
+    if len(sys.argv) > 1:
+        user_weight = sys.argv[1]
+    else:
+        user_weight = input("What is your current weight? ")
+
     ## Get Wahoo_access_token or refresh the token
     wahoo_access_token = wahoo_refresh(json.load(open(wahoo_cfg))) if os.path.isfile(wahoo_cfg) else wahoo_authenticate()
     wahoo_user_info = get_wahoo_user( wahoo_access_token)
@@ -75,6 +78,7 @@ def set_wahoo_user_weight( token, weight):
         print("Succesful writing weight to Wahoo API")
 
 def wahoo_authenticate():
+    '''
     if len(sys.argv) > 1:
         paramdata = {
             'action': 'requesttoken', 
@@ -84,7 +88,6 @@ def wahoo_authenticate():
             'grant_type': 'authorization_code',
             'redirect_uri': wahoo_redirect_uri
         }
-        print( 'ParamData = ', paramdata)
         res = requests.post('%s/oauth/token' % wahoo_api, params = paramdata )
         out = res.json()
         if res.status_code == 200:
@@ -95,9 +98,27 @@ def wahoo_authenticate():
             print(out)
             exit()
     else:
-        print('click the link below, authenticate and start this tool again with the code (you should see that in the url) as parameter')
-        print('%s/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=%s' % ( wahoo_api, wahoo_client_id,wahoo_redirect_uri,wahoo_scopes))
-        ## print('https://account.withings.com/oauth2_user/authorize2?response_type=code&withings_client_id=%s&state=intervals&scope=user.metrics&withings_redirect_uri=%s' % (withings_client_id, withings_redirect_uri))
+    '''
+    print('No token found, webbrowser will open, authorize the application and copy paste the code section')
+    url = '%s/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=%s' % ( wahoo_api, wahoo_client_id,wahoo_redirect_uri,wahoo_scopes)
+    webbrowser.open(url,new=2)
+    wahoo_code = input('Insert the code fromthe URL after authorizing: ')
+    paramdata = {
+        'action': 'requesttoken', 
+        'code': wahoo_code,
+        'client_id': wahoo_client_id,
+        'client_secret': wahoo_secret,
+        'grant_type': 'authorization_code',
+        'redirect_uri': wahoo_redirect_uri
+    }
+    res = requests.post('%s/oauth/token' % wahoo_api, params = paramdata )
+    out = res.json()
+    if res.status_code == 200:
+        json.dump(out, open(wahoo_cfg,'w'))
+        return out['access_token']
+    else:
+        print('authentication failed:')
+        print(out)
         exit()
 
 def wahoo_refresh(data):
@@ -128,7 +149,7 @@ def set_icu_wellness(event):
         print('Succesful writing weight to intervals.icu')
 
 def strava_authenticate():
-    if len(sys.argv) > 1:
+    '''if len(sys.argv) > 1:
         paramdata = {
             'client_id': strava_athlete_id,
             'client_secret': strava_client_secret,
@@ -144,11 +165,26 @@ def strava_authenticate():
             print('authentication failed:')
             print(out)
             exit()
+    else:'''
+    print("No token found, webbrowser will open, authorize the application and copy paste the code section")
+    url ='%s/authorize?client_id=%s&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=profile:write,read' % ( strava_url, strava_athlete_id)
+    webbrowser.open(url,new=2)
+    strava_code = input("Insert the code fromthe URL after authorizing: ")
+    paramdata = {
+        'client_id': strava_athlete_id,
+        'client_secret': strava_client_secret,
+        'code': strava_code,
+        'grant_type': 'authorization_code'
+    }
+    res = requests.post( url = '%s/token' % strava_url, data = paramdata)
+    out = res.json()
+    if res.status_code == 200:
+        json.dump(out, open(strava_cfg,'w'))
+        return out['access_token']
     else:
-        print("No token found, webbrowser will open, authorize the application and copy paste the code section")
-        url ='%s/authorize?client_id=%s&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=profile:write,read' % ( strava_url, strava_athlete_id)
-        webbrowser.open(url,new=2)
-        ### code = input("Copy the code from the URL: ")
+        print('authentication failed:')
+        print(out)
+        exit()
 
 def strava_refresh(data):
     url = '%s/token' % strava_url
