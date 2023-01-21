@@ -132,3 +132,4 @@ dmypy.json
 withings.json
 wahoo.json
 strava.json
+.vscode/settings.json
