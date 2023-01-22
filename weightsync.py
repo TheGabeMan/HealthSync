@@ -1,4 +1,4 @@
-"""
+""" 13u28
     config section
 """
 
@@ -8,13 +8,21 @@ import sys
 import json
 import requests
 import webbrowser
+import logging
+import getopt
 from datetime import datetime, timedelta
-
-# from requests.api import patch
 from requests.auth import HTTPBasicAuth
-
-# from datetime import datetime, timedelta
 from dotenv import load_dotenv
+
+logging.basicConfig(filename='weightsync.log', 
+                    encoding='utf-8', 
+                    level=logging.DEBUG)
+'''
+    logging.debug('This message should go to the log file')
+    logging.info('So should this')
+    logging.warning('And this, too')
+    logging.error('And non-ASCII stuff, too, like Øresund and Malmö')
+'''
 
 """
     Load .env file and environment settings
@@ -56,12 +64,29 @@ withings_api = "https://wbsapi.withings.net/v2"
 
 def main():
 
-    print('Usage: "python3 weightsync.py <your current weight>" in kg or')
-    print('Usage: "python3 weightsync.py" to read your weight from withings.')
+    arg_options = check_arguments(sys.argv)
 
-    if len(sys.argv) > 1:
-        user_weight = sys.argv[1]
-    else:
+    if "manual" in arg_options:
+        print("Manual weight entry")
+
+    sys.exit()
+
+
+    if len(sys.argv) > 1 and sys.sys.argv[1] != 'withings':
+        logging.info('Found weight as input.')
+        user_weight = sys.argv[1]    
+        # Todo: Check for correct weight value
+
+        # Write the weight to Wahoo
+        write_weight_wahoo(user_weight)
+
+        # Write the weight to intervals.icu
+        write_weight_intervals(user_weight)
+
+        # Write the weight to Strava
+        write_weight_strave(user_weight)
+
+    elif len(sys.argv) > 1 and sys.sys.argv[1] == 'withings':
         withings_access_token = (
             withings_refresh(json.load(open(withings_cfg)))
             if os.path.isfile(withings_cfg)
@@ -89,6 +114,52 @@ def main():
         print('***********    WITHINGS    DATA ***********')
         print("Withings data:\n\r",withings_measurements)
         exit()
+    else:
+        print('usage not correct. Script should be called with your weight in KG or using the option "withings" to read the weight from withings.' )
+
+
+def check_arguments(arguments):
+    # todo: Switch to ArgParse ( https://realpython.com/command-line-interfaces-python-argparse/ )
+    try:
+        opts, args = getopt.getopt(arguments[1:],
+                                   "",
+                                   ["debug", "weight=", "withings"]
+                                   )
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(err)  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
+
+    for opt in opts:
+        if opt == "--weight":
+            print("Weight from cmdline: %s" % opt[1])
+            if not isfloat(arg):
+                print("Received weight is not a floating-point number.")
+                usage()
+                sys.exit()
+        else:
+            assert False, "unhandled option"
+            usage()
+
+
+def isfloat(num):
+    # Check if num is a floating-point
+    try:
+        float(num)
+        return True
+    except ValueError:
+        return False
+
+
+def usage():
+        print('Run script as: weightsync.py --help --weight <weight in kg> --withings')
+        print('--weight <kg>    manual weight input in KG, will be synced to other applications')
+        print('--withings   sync data from withings to other applications')
+        print('--verbose    verbose logging on')
+
+
+def write_weight_wahoo( user_weight):
 
     # Get Wahoo_access_token or refresh the token
     wahoo_access_token = (
@@ -99,16 +170,23 @@ def main():
     wahoo_user_info = get_wahoo_user(wahoo_access_token)
     print(
         "Retreived Wahoo userid %s for %s %s"
-        % (wahoo_user_info["id"], wahoo_user_info["first"], wahoo_user_info["last"])
-    )
+        % (wahoo_user_info["id"], wahoo_user_info["first"], 
+            wahoo_user_info["last"]
+           )
+          )
+
     set_wahoo_user_weight(wahoo_access_token, user_weight)
 
-    # Write to Intervals.icu
-    # If sys.arg > 1 I assume manual input and therefore take todays date
-    if len(sys.argv) > 1:
-        icu_data = json.loads('{ "weight": %s, "id":"2023-01-14"}' % (user_weight))
-        set_icu_wellness(icu_data)
 
+def write_weight_intervals( user_weight):
+    # Write to Intervals.icu
+    datetoday = (datetime.today().date()).strftime("%Y-%m-%d")  # format needed: '2023-01-22'
+    icu_data = json.loads('{ "weight": %s, "id": %s}' %
+                          (user_weight, datetoday))
+    set_icu_wellness(icu_data)
+
+
+def write_weight_strave( user_weight):
     # Write to Strava
     strava_access_token = (
         strava_refresh(json.load(open(strava_cfg)))
@@ -120,6 +198,7 @@ def main():
         strava_access_token, float(user_weight), strava_user_info["id"]
     )  # For Strava the user weight must be of type float
 
+    print("Exit main")
 
 def get_wahoo_user(token):
     url = "%s/v1/user" % wahoo_api
@@ -278,7 +357,6 @@ def get_withings_measurements(token):
                 wellness[day]["bodyFat"] = float(
                     measurement["value"] * (10 ** measurement["unit"])
                 )
-    print(wellness)
     return wellness
 
 
