@@ -66,26 +66,24 @@ def main():
 
     arg_options = check_arguments(sys.argv)
 
-    if "manual" in arg_options:
+    if "--weight" in arg_options[0]:
         print("Manual weight entry")
+        for i in range(len(arg_options)):
+            if arg_options[i][0] == '--weight':
+                user_weight = arg_options[i][1]
+                # Write the weight to Wahoo
+                write_weight_wahoo(user_weight)
+
+                # Write the weight to intervals.icu
+                write_weight_intervals(user_weight)
+
+                # Write the weight to Strava
+                write_weight_strave(user_weight)
 
     sys.exit()
 
 
-    if len(sys.argv) > 1 and sys.sys.argv[1] != 'withings':
-        logging.info('Found weight as input.')
-        user_weight = sys.argv[1]    
-        # Todo: Check for correct weight value
-
-        # Write the weight to Wahoo
-        write_weight_wahoo(user_weight)
-
-        # Write the weight to intervals.icu
-        write_weight_intervals(user_weight)
-
-        # Write the weight to Strava
-        write_weight_strave(user_weight)
-
+'''
     elif len(sys.argv) > 1 and sys.sys.argv[1] == 'withings':
         withings_access_token = (
             withings_refresh(json.load(open(withings_cfg)))
@@ -114,8 +112,7 @@ def main():
         print('***********    WITHINGS    DATA ***********')
         print("Withings data:\n\r",withings_measurements)
         exit()
-    else:
-        print('usage not correct. Script should be called with your weight in KG or using the option "withings" to read the weight from withings.' )
+'''
 
 
 def check_arguments(arguments):
@@ -123,7 +120,7 @@ def check_arguments(arguments):
     try:
         opts, args = getopt.getopt(arguments[1:],
                                    "",
-                                   ["debug", "weight=", "withings"]
+                                   ["debug", "weight="]
                                    )
     except getopt.GetoptError as err:
         # print help information and exit:
@@ -131,16 +128,32 @@ def check_arguments(arguments):
         usage()
         sys.exit(2)
 
+    return_value = []
     for opt in opts:
-        if opt == "--weight":
-            print("Weight from cmdline: %s" % opt[1])
-            if not isfloat(arg):
+        if opt[0] == "--weight":
+            logging.debug('Weight from cmdline: %s' % opt[1])
+            if not isfloat(opt[1]):
+                logging.debug('Received weight is not a floating-point number.')
                 print("Received weight is not a floating-point number.")
                 usage()
                 sys.exit()
+            else:
+                logging.debug('Received weight is floating-point number.')
+                return_value.append([opt[0], opt[1]])
         else:
-            assert False, "unhandled option"
+            logging.debug('Received opt is not matched.')
             usage()
+
+    for arg in args:
+        if arg == "debug":
+            set_logging_debug()
+    return return_value
+
+
+def set_logging_debug():
+    logging.basicConfig(filename='weightsync.log',
+                        encoding='utf-8',
+                        level=logging.DEBUG)
 
 
 def isfloat(num):
