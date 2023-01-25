@@ -1,38 +1,44 @@
 """
     All Intervals.icu modules to talk to the intervals API
-    Infomation at: https://forum.intervals.icu/t/api-access-to-intervals-icu/609
+    Infomation at:
+    https://forum.intervals.icu/t/api-access-to-intervals-icu/609
 """
 
-from datetime import datetime, timedelta
 import json
 import logging
 import os
+from datetime import datetime, timedelta
+
 import requests
-from requests.models import HTTPBasicAuth
+import urllib3
 from dotenv import load_dotenv
+from requests.models import HTTPBasicAuth
 
 load_dotenv()
 
 # intervals.icu API access
 icu_athlete_id = os.getenv("icu_athlete_id")
 icu_api_key = os.getenv("icu_api_key")
-icu_api = "https://intervals.icu/api/v1/athlete/%s" % icu_athlete_id
+icu_api = f"https://intervals.icu/api/v1/athlete/{icu_athlete_id}"
 
 
 def set_intervals_wellness(data):
-    requests.packages.urllib3.disable_warnings()
+    ''' Write wellness data to intervals '''
+    urllib3.disable_warnings()
     res = requests.put(
-        "%s/wellness/%s" % (icu_api, data["id"]),
+        f'{icu_api}/wellness/{data["id"]}',
         auth=HTTPBasicAuth("API_KEY", icu_api_key),
         json=data,
         verify=False,
+        timeout=10
     )
     if res.status_code != 200:
         print("upload to intervals.icu failed with status code:",
               res.status_code)
         print(res.json())
-        logging.info("upload to intervals.icu failed with status code:",
-                     res.status_code)
+        logging.info("upload to intervals.icu failed with status code: %s",
+                     res.status_code
+                     )
         logging.info(res.json())
     else:
         print("Succesful writing weight to intervals.icu")
@@ -40,32 +46,36 @@ def set_intervals_wellness(data):
 
 
 def get_intervals_wellness():
+    ''' Read wellness from intervals '''
     # Get last 30 days of wellness data
     oldest = datetime.today().date() - timedelta(30)
+    oldestiso = oldest.isoformat()
+
     newest = datetime.today().date()
-    url = "%s/wellness?oldest=%s&newest=%s" % (
-        icu_api,
-        oldest.isoformat(),
-        newest.isoformat(),
-    )
-    requests.packages.urllib3.disable_warnings()
+    newestiso = newest.isoformat()
+
+    url = f"{icu_api}/wellness?oldest={oldestiso}&newest={newestiso}"
+    urllib3.disable_warnings()
     res = requests.get(
-        url,
-        auth=HTTPBasicAuth("API_KEY", icu_api_key),
-        verify=False,
-    )
+                       url,
+                       auth=HTTPBasicAuth("API_KEY", icu_api_key),
+                       verify=False,
+                       timeout=10
+                        )
     if res.status_code != 200:
         print("Get info fromintervals.icu failed with status code:",
               res.status_code)
         print(res.json())
-        logging.info("Get info fromintervals.icu failed with status code:",
+        logging.info("Get info fromintervals.icu failed with status code: %s",
                      res.status_code)
         logging.info(res.json())
     return res.json()
 
 
 def set_intervals_weight(user_weight):
+    ''' Write weight data to intervals '''
     # Write to Intervals.icu
-    datetoday = (datetime.today().date()).strftime("%Y-%m-%d")  # format '2023-01-22'
-    intervals_data = json.loads('{ "weight": "%s", "id": "%s"}' % (user_weight, datetoday))
+    datetoday = (datetime.today().date()).strftime("%Y-%m-%d")
+    jsonstring = f'{"weight":"{user_weight}","id":"{datetoday}"}'
+    intervals_data = json.loads(jsonstring)
     set_intervals_wellness(intervals_data)

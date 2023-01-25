@@ -22,13 +22,18 @@ withings_api = "https://wbsapi.withings.net/v2"
 
 
 def withings_authenticate():
+    ''' Get Authentication token from withings'''
     print(
-        "No token found, webbrowser will open, authorize the application and copy past the code section"
-    )
+        "No token found, webbrowser will open, authorize the application and\
+           copy past the code section"
+           )
     url = (
-        "https://account.withings.com/oauth2/authorize?response_type=code&withings_client_id=%s&state=interval&scope=user.metrics&withings_redirect_uri=%s"
-        % (withings_client_id, withings_redirect_uri)
-    )
+        f"https://account.withings.com/oauth2/authorize?response_type=code\
+            &withings_client_id={withings_client_id}\
+            &state=interval\
+            &scope=user.metrics\
+            &withings_redirect_uri={withings_redirect_uri}"
+        )
 
     webbrowser.open(url, new=2)
     withings_code = input("Insert the code fromthe URL after authorizing: ")
@@ -40,10 +45,10 @@ def withings_authenticate():
         "grant_type": "authorization_code",
         "redirect_uri": withings_redirect_uri,
     }
-    res = requests.post("%s/oauth2" % withings_api, params=paramdata)
+    res = requests.post("{withings_api}/oauth2", params=paramdata, timeout=10)
     out = res.json()
     if res.status == 200:
-        json.dump(out["body"], open(withings_cfg, "w"))
+        json.dump(out["body"], open(withings_cfg, "w", encoding="utf8"))
         return out["body"]["access_token"]
     else:
         print("authentication failed:")
@@ -56,7 +61,7 @@ def withings_refresh(token):
     this makes sure we won't have to reauthorize again.
     """
 
-    url = "%s/oauth2" % withings_api
+    url = "{withings_api}/oauth2"
     res = requests.post(
         url,
         params={
@@ -66,10 +71,11 @@ def withings_refresh(token):
             "grant_type": "refresh_token",
             "refresh_token": token["refresh_token"],
         },
+        timeout=10
     )
     out = res.json()
     if out["status"] == 0:
-        json.dump(out["body"], open(withings_cfg, "w"))
+        json.dump(out["body"], open(withings_cfg, "w", encoding="utf8"))
         return out["body"]["access_token"]
     else:
         print(out)
@@ -77,18 +83,20 @@ def withings_refresh(token):
 
 
 def get_withings_measurements(token):
+    ''' Read data from withings '''
     start = datetime.today().date() - timedelta(7)  # last 7 days
     # start = datetime(2022,1,1)  # override to initially get all values
-    url = "%s/measure" % withings_api
+    url = f"{withings_api}/measure"
     res = requests.get(
         url,
-        headers={"Authorization": "Bearer %s" % token},
+        headers={f'"Authorization": "Bearer {token}"'},
         params={
             "action": "getmeas",
             "meastypes": "1,6",
             "category": 1,
             "lastupdate": start.strftime("%s"),
         },
+        timeout=10
     )
     withings_results = res.json()["body"]
     wellness = {}
