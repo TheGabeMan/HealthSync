@@ -134,3 +134,14 @@ wahoo.json
 strava.json
 .vscode/settings.json
 HealthSync.code-workspace
+healtsync/pyvenv.cfg
+healtsync/bin/activate
+healtsync/bin/activate.csh
+healtsync/bin/activate.fish
+healtsync/bin/Activate.ps1
+healtsync/bin/pip
+healtsync/bin/pip3
+healtsync/bin/pip3.9
+healtsync/bin/python
+healtsync/bin/python3
+healtsync/bin/python3.9
