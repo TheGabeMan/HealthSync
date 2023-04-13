@@ -145,3 +145,6 @@ healtsync/bin/pip3.9
 healtsync/bin/python
 healtsync/bin/python3
 healtsync/bin/python3.9
+healtsync/bin/flake8
+healtsync/bin/pycodestyle
+healtsync/bin/pyflakes
