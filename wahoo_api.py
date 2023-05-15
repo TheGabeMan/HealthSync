@@ -46,10 +46,7 @@ def wahoo_authenticate():
         "grant_type": "authorization_code",
         "redirect_uri": wahoo_redirect_uri,
     }
-    res = requests.post(
-                        f"{wahoo_api}/oauth/token",
-                        params=paramdata,
-                        timeout=10)
+    res = requests.post(f"{wahoo_api}/oauth/token", params=paramdata, timeout=10)
     out = res.json()
     if res.status_code == 200:
         with open(wahoo_cfg, "w", encoding="utf8") as file:
@@ -95,9 +92,7 @@ def wahoo_refresh(token):
 def get_wahoo_user(token):
     """Read user information from Wahoo"""
     url = f"{wahoo_api}/v1/user"
-    res = requests.get(url,
-                       headers={"Authorization": f"Bearer {token}"},
-                       timeout=10)
+    res = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=10)
     return res.json()
 
 
@@ -115,8 +110,8 @@ def set_wahoo_user_weight(token, weight):
         logging.info("There was an error writing to Wahoo API:")
         logging.info(res.json())
     else:
-        print("Succesful writing weight to Wahoo API")
-        logging.info("Succesful writing weight to Wahoo API")
+        print(f"Succesful writing weight {weight} to Wahoo API")
+        logging.info("Succesful writing weight %s to Wahoo API", weight)
 
 
 def write_weight_wahoo(user_weight):
@@ -131,10 +126,10 @@ def write_weight_wahoo(user_weight):
     )
     wahoo_user_info = get_wahoo_user(wahoo_access_token)
     logging.info(
-                 'Retreived Wahoo userid %s for %s %s',
-                 wahoo_user_info["id"],
-                 wahoo_user_info["first"],
-                 wahoo_user_info["last"]
-                )
+        "Retreived Wahoo userid %s for %s %s",
+        wahoo_user_info["id"],
+        wahoo_user_info["first"],
+        wahoo_user_info["last"],
+    )
 
     set_wahoo_user_weight(wahoo_access_token, user_weight)

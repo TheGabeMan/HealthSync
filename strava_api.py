@@ -93,20 +93,22 @@ def strava_refresh(token):
 def get_strava_user_info(token):
     ''' Read User info from Strava '''
     url = f"{strava_api}/athlete"
-    headers = {f'"Authorization": "Bearer {token}"'}
-    res = requests.get(
+    # headers = {f'"Authorization": "Bearer {token}"'}
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = requests.get(
                        url,
                        headers=headers,
                        timeout=10
                        )
-    if res.status_code != 200:
+    if response.status_code != 200:
         print("There was an error reading from Strava API:")
-        print(res.json())
+        print(response.json())
         logging.info("There was an error reading from Strava API:")
-        logging.info(res.json())
+        logging.info(response.json())
     else:
         logging.info('Succesful reading from Strava API')
-        return res.json()
+        return response.json()
 
 
 def set_strava_weight(user_weight):
@@ -128,7 +130,8 @@ def set_strava_user_weight(token, weight, user_id):
     ''' Write weight to Strava '''
     # TODO: check if function is still being used
     url = f"{strava_api}/athlete"
-    headers = {f'"Authorization": "Bearer {token}"'}
+    # headers = {f'"Authorization": "Bearer {token}"'}
+    headers = {"Authorization": f"Bearer {token}"}
     data = {"weight": weight, "id": user_id}
     res = requests.put(url, headers=headers, data=data, timeout=10)
     if res.status_code != 200:
@@ -138,5 +141,5 @@ def set_strava_user_weight(token, weight, user_id):
         logging.info(res.json())
 
     else:
-        print("Succesful writing weight to Strava API")
-        logging.info("Succesful writing weight to Strava API")
+        print(f"Succesful writing weight {weight} to Strava API")
+        logging.info("Succesful writing weight %s to Strava API", weight)

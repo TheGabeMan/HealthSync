@@ -25,24 +25,25 @@ icu_api = f"https://intervals.icu/api/v1/athlete/{icu_athlete_id}"
 def set_intervals_wellness(data):
     ''' Write wellness data to intervals '''
     urllib3.disable_warnings()
-    res = requests.put(
+    jsondata = json.dumps(data)
+    response = requests.put(
         f'{icu_api}/wellness/{data["id"]}',
         auth=HTTPBasicAuth("API_KEY", icu_api_key),
-        json=data,
+        json=jsondata,
         verify=False,
         timeout=10
     )
-    if res.status_code != 200:
+    if response.status_code != 200:
         print("upload to intervals.icu failed with status code:",
-              res.status_code)
-        print(res.json())
+              response.status_code)
+        print(response.json())
         logging.info("upload to intervals.icu failed with status code: %s",
-                     res.status_code
+                     response.status_code
                      )
-        logging.info(res.json())
+        logging.info(response.json())
     else:
-        print("Succesful writing weight to intervals.icu")
-        logging.info("Succesful writing weight to intervals.icu")
+        print(f"Succesful writing weight {data['weight']} to Intervals API")
+        logging.info("Succesful writing weight %s to Intervals API", data['weight'])
 
 
 def get_intervals_wellness():
@@ -76,6 +77,6 @@ def set_intervals_weight(user_weight):
     ''' Write weight data to intervals '''
     # Write to Intervals.icu
     datetoday = (datetime.today().date()).strftime("%Y-%m-%d")
-    jsonstring = f'{"weight":"{user_weight}","id":"{datetoday}"}'
-    intervals_data = json.loads(jsonstring)
-    set_intervals_wellness(intervals_data)
+    data = {"weight": user_weight, "id": datetoday}
+    # intervals_data = json.dumps(data)
+    set_intervals_wellness(data)
