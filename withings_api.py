@@ -3,11 +3,13 @@
     Infomation at: https://developer.withings.com/
 """
 
-
-from datetime import datetime, timedelta
 import json
 import webbrowser
 import os
+import sys
+from datetime import datetime, timedelta
+from genericpath import isfile
+
 import requests
 from dotenv import load_dotenv
 
@@ -21,14 +23,39 @@ withings_redirect_uri = os.getenv("withings_redirect_uri")
 withings_api = "https://wbsapi.withings.net/v2"
 
 
+def get_withings_user_weight():
+    ''' Read user weight from withings '''
+    withings_data = get_withings_data()
+    user_weight = withings_data["weight"]
+    return user_weight
+
+
+def get_withings_data():
+    ''' Read user data from withings API '''
+    withings_access_token = (
+        withings_refresh(json.load(open(withings_cfg, encoding="utf8")))
+        if os.path.isfile(withings_cfg)
+        else withings_authenticate()
+    )
+    withings_user_measurements = \
+        get_withings_last_measurement(withings_access_token)
+    
+    return withings_user_measurements
+
+
 def withings_authenticate():
+    ''' Get Authentication token from withings'''
     print(
-        "No token found, webbrowser will open, authorize the application and copy past the code section"
-    )
+        "No token found, webbrowser will open, authorize the application and\
+           copy past the code section"
+           )
     url = (
-        "https://account.withings.com/oauth2/authorize?response_type=code&withings_client_id=%s&state=interval&scope=user.metrics&withings_redirect_uri=%s"
-        % (withings_client_id, withings_redirect_uri)
-    )
+        f"https://account.withings.com/oauth2/authorize?response_type=code\
+            &withings_client_id={withings_client_id}\
+            &state=interval\
+            &scope=user.metrics\
+            &withings_redirect_uri={withings_redirect_uri}"
+        )
 
     webbrowser.open(url, new=2)
     withings_code = input("Insert the code fromthe URL after authorizing: ")
@@ -40,15 +67,15 @@ def withings_authenticate():
         "grant_type": "authorization_code",
         "redirect_uri": withings_redirect_uri,
     }
-    res = requests.post("%s/oauth2" % withings_api, params=paramdata)
+    res = requests.post("{withings_api}/oauth2", params=paramdata, timeout=10)
     out = res.json()
     if res.status == 200:
-        json.dump(out["body"], open(withings_cfg, "w"))
+        json.dump(out["body"], open(withings_cfg, "w", encoding="utf8"))
         return out["body"]["access_token"]
-    else:
-        print("authentication failed:")
-        print(out)
-        exit()
+
+    print("authentication failed:")
+    print(out)
+    sys.exit()
 
 
 def withings_refresh(token):
@@ -56,7 +83,7 @@ def withings_refresh(token):
     this makes sure we won't have to reauthorize again.
     """
 
-    url = "%s/oauth2" % withings_api
+    url = f"{withings_api}/oauth2"
     res = requests.post(
         url,
         params={
@@ -66,31 +93,35 @@ def withings_refresh(token):
             "grant_type": "refresh_token",
             "refresh_token": token["refresh_token"],
         },
+        timeout=10
     )
     out = res.json()
     if out["status"] == 0:
-        json.dump(out["body"], open(withings_cfg, "w"))
+        json.dump(out["body"], open(withings_cfg, "w", encoding="utf8"))
         return out["body"]["access_token"]
     else:
         print(out)
-        exit()
+        sys.exit()
 
 
 def get_withings_measurements(token):
-    start = datetime.today().date() - timedelta(7)  # last 7 days
-    # start = datetime(2022,1,1)  # override to initially get all values
-    url = "%s/measure" % withings_api
-    res = requests.get(
+    ''' Read data from withings '''
+    start_date = datetime.today().date() - timedelta(30)  # last 30 days
+    # start_date = datetime(2022,1,1)  # override to initially get all values
+    url = f"{withings_api}/measure"
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(
         url,
-        headers={"Authorization": "Bearer %s" % token},
+        headers=headers,
         params={
             "action": "getmeas",
             "meastypes": "1,6",
             "category": 1,
-            "lastupdate": start.strftime("%s"),
+            "lastupdate": start_date.strftime("%s"),
         },
+        timeout=10
     )
-    withings_results = res.json()["body"]
+    withings_results = response.json()["body"]
     wellness = {}
     for measurementdates in withings_results["measuregrps"]:
 
@@ -108,4 +139,38 @@ def get_withings_measurements(token):
                 wellness[day]["bodyFat"] = float(
                     measurement["value"] * (10 ** measurement["unit"])
                 )
+    return wellness
+
+
+def get_withings_last_measurement(token):
+    ''' Read data from withings '''
+    start_date = datetime.today().date() - timedelta(30)  # last 30 days
+    # start_date = datetime(2022,1,1)  # override to initially get all values
+    url = f"{withings_api}/measure"
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(
+        url,
+        headers=headers,
+        params={
+            "action": "getmeas",
+            "meastypes": "1,6",
+            "category": 1,
+            "lastupdate": start_date.strftime("%s"),
+        },
+        timeout=10
+    )
+    withings_results = response.json()["body"]
+    last_measurement = withings_results["measuregrps"][len(withings_results["measuregrps"])-1]
+    wellness = {}
+    wellness["day"] = {}
+    wellness["day"] = datetime.fromtimestamp(last_measurement["modified"]).date()
+    for measurement in last_measurement["measures"]:
+        if measurement["type"] == 1:
+            wellness["weight"] = float(
+                measurement["value"] * (10 ** measurement["unit"])
+            )
+        if measurement["type"] == 6:
+            wellness["bodyFat"] = float(
+                measurement["value"] * (10 ** measurement["unit"])
+            )
     return wellness

@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+import sys
 import webbrowser
 import requests
 from dotenv import load_dotenv
@@ -18,18 +19,23 @@ wahoo_secret = os.getenv("wahoo_secret")
 wahoo_redirect_uri = os.getenv("wahoo_redirect_uri")
 wahoo_api = "https://api.wahooligan.com"
 wahoo_cfg = "wahoo.json"
-wahoo_scopes = "user_write+email+workouts_read+workouts_write+power_zones_read+power_zones_write+offline_data+user_read"
+wahoo_scopes = "user_write+email+workouts_read+workouts_write+power_zones_read\
+                +power_zones_write+offline_data+user_read"
 
 
 def wahoo_authenticate():
+    """Setup Authentication with Wahoo API"""
     print(
-        "No token found, webbrowser will open, authorize the application and copy paste the code section"
+        "No token found, webbrowser will open, authorize the application \
+            and copy paste the code section"
     )
-    logging.info("No token found, webbrowser will open, authorize the application and copy paste the code section")
-    url = (
-        "%s/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code&scope=%s"
-        % (wahoo_api, wahoo_client_id, wahoo_redirect_uri, wahoo_scopes)
+    logging.info(
+        "No token found, webbrowser will open, authorize the \
+        application and copy paste the code section"
     )
+    url = f"{wahoo_api}/oauth/authorize?client_id={wahoo_client_id}\
+            &redirect_uri={wahoo_redirect_uri}&response_type=code\
+            &scope={wahoo_scopes}"
     webbrowser.open(url, new=2)
     wahoo_code = input("Insert the code from the URL after authorizing: ")
     paramdata = {
@@ -40,24 +46,26 @@ def wahoo_authenticate():
         "grant_type": "authorization_code",
         "redirect_uri": wahoo_redirect_uri,
     }
-    res = requests.post("%s/oauth/token" % wahoo_api, params=paramdata)
+    res = requests.post(f"{wahoo_api}/oauth/token", params=paramdata, timeout=10)
     out = res.json()
     if res.status_code == 200:
-        json.dump(out, open(wahoo_cfg, "w"))
+        with open(wahoo_cfg, "w", encoding="utf8") as file:
+            json.dump(out, file)
+            file.close()
         return out["access_token"]
-    else:
+    if res.status_code != 200:
         print("Wahoo authentication failed:")
         print(out)
         logging.info("Wahoo authentication failed:")
         logging.info(out)
-        exit()
+        sys.exit()
 
 
 def wahoo_refresh(token):
     """refresh current token
     this makes sure we won't have to reauthorize again."""
 
-    url = "%s/oauth/token" % wahoo_api
+    url = f"{wahoo_api}/oauth/token"
     res = requests.post(
         url,
         params={
@@ -67,55 +75,61 @@ def wahoo_refresh(token):
             "grant_type": "refresh_token",
             "refresh_token": token["refresh_token"],
         },
+        timeout=10,
     )
     out = res.json()
     if res.status_code == 200:
-        json.dump(out, open(wahoo_cfg, "w"))
+        with open(wahoo_cfg, "w", encoding="utf8") as file:
+            json.dump(out, file)
+            file.close()
         return out["access_token"]
-    else:
+    if res.status_code != 200:
         logging.info("Wahoo token refresh failed")
         logging.info(out)
-        exit()
+        sys.exit()
 
 
 def get_wahoo_user(token):
-    url = "%s/v1/user" % wahoo_api
-    res = requests.get(url, headers={"Authorization": "Bearer %s" % token})
+    """Read user information from Wahoo"""
+    url = f"{wahoo_api}/v1/user"
+    res = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=10)
     return res.json()
 
 
 def set_wahoo_user_weight(token, weight):
+    """Write the weight to the Wahoo user settings"""
     # TODO: Which function should be used? write_weight_wahoo
     #       or set_wahoo_user_weight
-    url = "%s/v1/user" % wahoo_api
-    headers = {"Authorization": "Bearer %s" % token}
-    data = {"user[weight]": "%s" % weight}
-    res = requests.put(url, headers=headers, data=data)
+    url = f"{wahoo_api}/v1/user"
+    headers = {"Authorization": f"Bearer {token}"}
+    data = {"user[weight]": f"{weight}"}
+    res = requests.put(url, headers=headers, data=data, timeout=10)
     if res.status_code != 200:
         print("There was an error writing to Wahoo API:")
         print(res.json())
         logging.info("There was an error writing to Wahoo API:")
         logging.info(res.json())
     else:
-        print("Succesful writing weight to Wahoo API")
-        logging.info("Succesful writing weight to Wahoo API")
+        print(f"Succesful writing weight {weight} to Wahoo API")
+        logging.info("Succesful writing weight %s to Wahoo API", weight)
 
 
-def write_weight_wahoo( user_weight):
+def write_weight_wahoo(user_weight):
+    """Write the weight to the Wahoo user settings"""
     # TODO: Which function should be used? write_weight_wahoo
     #       or set_wahoo_user_weight
-    # Get Wahoo_access_token or refresh the token
+
     wahoo_access_token = (
-        wahoo_refresh(json.load(open(wahoo_cfg)))
+        wahoo_refresh(json.load(open(wahoo_cfg, encoding="utf8")))
         if os.path.isfile(wahoo_cfg)
         else wahoo_authenticate()
     )
     wahoo_user_info = get_wahoo_user(wahoo_access_token)
     logging.info(
-        "Retreived Wahoo userid %s for %s %s"
-        % (wahoo_user_info["id"], wahoo_user_info["first"], 
-            wahoo_user_info["last"]
-           )
-          )
+        "Retreived Wahoo userid %s for %s %s",
+        wahoo_user_info["id"],
+        wahoo_user_info["first"],
+        wahoo_user_info["last"],
+    )
 
     set_wahoo_user_weight(wahoo_access_token, user_weight)

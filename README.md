@@ -1,3 +1,16 @@
+<!-- PROJECT SHIELDS -->
+[![GitHub Activity][commits-shield]][commits]
+[![GitHub Last Commit][last-commit-shield]][commits]
+[![Linting][linting-shield]][linting-url]
+
+![Project Maintenance][maintenance-shield]
+[![License][license-shield]](LICENSE.md)
+[![Contributors][contributors-shield]][contributors-url]
+
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+
 # HealthSync
 With this Python Script I'm trying to sync my healthdata between severall websites and later on I might add it to my own MySQL DB.
 
