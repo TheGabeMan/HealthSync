@@ -45,10 +45,6 @@ def get_withings_data():
 
 def withings_authenticate():
     ''' Get Authentication token from withings'''
-    print(
-        "No token found, webbrowser will open, authorize the application and\
-           copy past the code section"
-           )
     url = (
         f"https://account.withings.com/oauth2/authorize?response_type=code\
             &withings_client_id={withings_client_id}\
@@ -56,7 +52,10 @@ def withings_authenticate():
             &scope=user.metrics\
             &withings_redirect_uri={withings_redirect_uri}"
         )
-
+    print(
+        f"No token found, webbrowser will open, authorize the application and\
+           copy past the code section or open this URL manually: {url}"
+           )
     webbrowser.open(url, new=2)
     withings_code = input("Insert the code fromthe URL after authorizing: ")
     paramdata = {

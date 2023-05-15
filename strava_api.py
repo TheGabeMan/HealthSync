@@ -6,6 +6,7 @@
 import json
 import logging
 import os
+import sys
 import webbrowser
 from dotenv import load_dotenv
 
@@ -23,12 +24,6 @@ strava_api = "https://www.strava.com/api/v3"
 
 def strava_authenticate():
     ''' Get Authentication token from Strava '''
-    print(
-        "No token found, webbrowser will open, authorize the application and \
-            copy paste the code section"
-    )
-    logging.info("No token found, webbrowser will open, authorize the \
-        application and copy paste the code section")
     url = (
         f"{strava_url}/authorize?client_id={strava_athlete_id}\
             &response_type=code\
@@ -36,6 +31,12 @@ def strava_authenticate():
             &approval_prompt=force\
             &scope=profile:write,read"
         )
+    print(
+        f"No token found, webbrowser will open, authorize the application and \
+            copy paste the code section or open this url manually {url}"
+    )
+    logging.info("No token found, webbrowser will open, authorize the \
+        application and copy paste the code section")
     webbrowser.open(url, new=2)
     strava_code = input("Insert the code fromthe URL after authorizing: ")
     paramdata = {
@@ -55,12 +56,11 @@ def strava_authenticate():
                        encoding="utf8")
                   )
         return out["access_token"]
-    else:
-        print("Strava authentication failed:")
-        print(out)
-        logging.info("Strava authentication failed:")
-        logging.info(out)
-        exit()
+    print("Strava authentication failed:")
+    print(out)
+    logging.info("Strava authentication failed:")
+    logging.info(out)
+    sys.exit()
 
 
 def strava_refresh(token):
