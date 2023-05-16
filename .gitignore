@@ -109,6 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+healtsync/
 
 # Spyder project settings
 .spyderproject
@@ -149,3 +150,4 @@ healtsync/bin/flake8
 healtsync/bin/pycodestyle
 healtsync/bin/pyflakes
 intervals_test.py
+archive/
