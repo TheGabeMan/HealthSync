@@ -25,11 +25,15 @@ icu_api = f"https://intervals.icu/api/v1/athlete/{icu_athlete_id}"
 def set_intervals_wellness(data):
     """Write wellness data to intervals"""
     urllib3.disable_warnings()
-    jsondata = json.dumps(data)
+    url = f'{icu_api}/wellness/{data["id"]}'
+    headers = {}
+    headers['Content-Type'] = 'application/json'
+
     response = requests.put(
-        f'{icu_api}/wellness/{data["id"]}',
+        url,
         auth=HTTPBasicAuth("API_KEY", icu_api_key),
-        json=jsondata,
+        json=data,
+        headers=headers,
         verify=False,
         timeout=10,
     )
@@ -50,7 +54,7 @@ def set_intervals_wellness(data):
 def get_intervals_wellness():
     """Read wellness from intervals"""
     # Get last 30 days of wellness data
-    oldest = datetime.today().date() - timedelta(30)
+    oldest = datetime.today().date() - timedelta(4)
     oldestiso = oldest.isoformat()
 
     newest = datetime.today().date()
@@ -75,6 +79,6 @@ def set_intervals_weight(user_weight):
     """Write weight data to intervals"""
     # Write to Intervals.icu
     datetoday = (datetime.today().date()).strftime("%Y-%m-%d")
-    data = {"weight": user_weight, "id": datetoday}
+    data = {"id": datetoday, "weight": user_weight}
     # intervals_data = json.dumps(data)
     return set_intervals_wellness(data)

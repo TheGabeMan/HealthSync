@@ -148,3 +148,4 @@ healtsync/bin/python3.9
 healtsync/bin/flake8
 healtsync/bin/pycodestyle
 healtsync/bin/pyflakes
+intervals_test.py
