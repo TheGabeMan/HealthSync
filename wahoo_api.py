@@ -109,9 +109,11 @@ def set_wahoo_user_weight(token, weight):
         print(res.json())
         logging.info("There was an error writing to Wahoo API:")
         logging.info(res.json())
+        return False
     else:
         print(f"Succesful writing weight {weight} to Wahoo API")
         logging.info("Succesful writing weight %s to Wahoo API", weight)
+        return True
 
 
 def write_weight_wahoo(user_weight):
@@ -131,5 +133,4 @@ def write_weight_wahoo(user_weight):
         wahoo_user_info["first"],
         wahoo_user_info["last"],
     )
-
-    set_wahoo_user_weight(wahoo_access_token, user_weight)
+    return set_wahoo_user_weight(wahoo_access_token, user_weight)
