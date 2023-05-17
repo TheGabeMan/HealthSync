@@ -8,7 +8,7 @@ import webbrowser
 import os
 import sys
 from datetime import datetime, timedelta
-from genericpath import isfile
+# from genericpath import isfile
 
 import requests
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ withings_client_id = os.getenv("withings_client_id")
 withings_client_secret = os.getenv("withings_client_secret")
 withings_cfg = "withings.json"
 withings_redirect_uri = os.getenv("withings_redirect_uri")
-withings_api = "https://wbsapi.withings.net/v2"
+withings_api = "https://wbsapi.withings.net"
 
 
 def get_withings_user_weight():
@@ -43,18 +43,19 @@ def get_withings_data():
 
 
 def withings_authenticate():
-    """Get Authentication token from withings"""
-    url = f"https://account.withings.com/oauth2/authorize?response_type=code\
-            &withings_client_id={withings_client_id}\
-            &state=interval\
-            &scope=user.metrics\
-            &withings_redirect_uri={withings_redirect_uri}"
-    print(
-        f"No token found, webbrowser will open, authorize the application and\
-           copy past the code section or open this URL manually: {url}"
-    )
-    webbrowser.open(url, new=2)
-    withings_code = input("Insert the code fromthe URL after authorizing: ")
+    ''' Get first time authentication token from withings'''
+    url = 'https://account.withings.com/oauth2_user/authorize2'
+    params = {'response_type': 'code',
+              'client_id': withings_client_id,
+              'state': 'interval',
+              'scope': 'user.metrics',
+              'redirect_uri': withings_redirect_uri
+              }
+
+    response = requests.get(url, params=params, timeout=10)
+    webbrowser.open(response.url, new=2)
+    withings_code = input("Insert the code block from the URL after authorizing: ")
+
     paramdata = {
         "action": "requesttoken",
         "code": withings_code,
@@ -63,9 +64,9 @@ def withings_authenticate():
         "grant_type": "authorization_code",
         "redirect_uri": withings_redirect_uri,
     }
-    res = requests.post("{withings_api}/oauth2", params=paramdata, timeout=10)
+    res = requests.post(f"{withings_api}/v2/oauth2", params=paramdata, timeout=10)
     out = res.json()
-    if res.status == 200:
+    if res.status_code == 200:
         json.dump(out["body"], open(withings_cfg, "w", encoding="utf8"))
         return out["body"]["access_token"]
 
@@ -79,7 +80,7 @@ def withings_refresh(token):
     this makes sure we won't have to reauthorize again.
     """
 
-    url = f"{withings_api}/oauth2"
+    url = f"{withings_api}/v2/oauth2"
     res = requests.post(
         url,
         params={
@@ -104,14 +105,17 @@ def get_withings_measurements(token):
     """Read data from withings"""
     start_date = datetime.today().date() - timedelta(30)  # last 30 days
     # start_date = datetime(2022,1,1)  # override to initially get all values
-    url = f"{withings_api}/measure"
+    url = f"{withings_api}/v2/measure"
     headers = {"Authorization": f"Bearer {token}"}
+
+    # Getting meastypes 1,5,6,8,11,76,88 just reads all available
+    # measurements from the Smart Body Analyzer scale
     response = requests.get(
         url,
         headers=headers,
         params={
             "action": "getmeas",
-            "meastypes": "1,6",
+            "meastypes": "1,5,6,8,11,76,88",
             "category": 1,
             "lastupdate": start_date.strftime("%s"),
         },
@@ -142,7 +146,7 @@ def get_withings_last_measurement(token):
     """Read data from withings"""
     start_date = datetime.today().date() - timedelta(30)  # last 30 days
     # start_date = datetime(2022,1,1)  # override to initially get all values
-    url = f"{withings_api}/measure"
+    url = f"{withings_api}/v2/measure"
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.get(
         url,
