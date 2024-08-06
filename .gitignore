@@ -151,3 +151,4 @@ healtsync/bin/pycodestyle
 healtsync/bin/pyflakes
 intervals_test.py
 archive/
+.DS_Store
