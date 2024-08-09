@@ -186,6 +186,8 @@ def fitbit_authenticate():
     response = requests.get(url, params=params, timeout=10)
     
     webbrowser.open(response.url, new=2)
+    print(f"If browser didn't open, copy this link into your browser: {response.url}")
+    
     fitbit_code = input(
         "Copy the authorization code located between the code parameter name and the string #_=_     : "
     )

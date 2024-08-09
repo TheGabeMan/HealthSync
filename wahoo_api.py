@@ -25,9 +25,7 @@ wahoo_scopes = "user_write+email+workouts_read+workouts_write+power_zones_read\
 
 def wahoo_authenticate():
     """Setup Authentication with Wahoo API"""
-    url = f"{wahoo_api}/oauth/authorize?client_id={wahoo_client_id}\
-            &redirect_uri={wahoo_redirect_uri}&response_type=code\
-            &scope={wahoo_scopes}"
+    url = f"{wahoo_api}/oauth/authorize?client_id={wahoo_client_id}&redirect_uri={wahoo_redirect_uri}&response_type=code&scope={wahoo_scopes}"
     print(
         f"No token found, webbrowser will open, authorize the application \
             and copy paste the code section or open URL manually {url}"
@@ -37,6 +35,7 @@ def wahoo_authenticate():
         application and copy paste the code section"
     )
     webbrowser.open(url, new=2)
+    print(f"If browser didn't open, copy this link into your browser: {url}")
     wahoo_code = input("Insert the code from the URL after authorizing: ")
     paramdata = {
         "action": "requesttoken",

@@ -55,6 +55,7 @@ def withings_authenticate():
 
     response = requests.get(url, params=params, timeout=10)
     webbrowser.open(response.url, new=2)
+    print(f"If browser didn't open, copy this link into your browser: {response.url}")
     withings_code = input("Insert the code block from the URL after authorizing: ")
 
     paramdata = {

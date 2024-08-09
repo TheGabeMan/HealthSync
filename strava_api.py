@@ -24,11 +24,7 @@ strava_api = "https://www.strava.com/api/v3"
 
 def strava_authenticate():
     """Get Authentication token from Strava"""
-    url = f"{strava_url}/authorize?client_id={strava_athlete_id}\
-            &response_type=code\
-            &redirect_uri=http://localhost/exchange_token\
-            &approval_prompt=force\
-            &scope=profile:write,read"
+    url = f"{strava_url}/authorize?client_id={strava_athlete_id}&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=profile:write,read"
     print(
         f"No token found, webbrowser will open, authorize the application and \
             copy paste the code section or open this url manually {url}"
@@ -38,6 +34,7 @@ def strava_authenticate():
         application and copy paste the code section"
     )
     webbrowser.open(url, new=2)
+    print(f"If browser didn't open, copy this link into your browser: {url}")
     strava_code = input("Insert the code fromthe URL after authorizing: ")
     paramdata = {
         "client_id": strava_athlete_id,
