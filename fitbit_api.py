@@ -173,7 +173,7 @@ def fitbit_authenticate():
 
     encoded_cred = f"{fitbit_client_id}:{fitbit_client_secret}"
     basic_token = base64.b64encode(bytes(encoded_cred, "utf8")).decode("utf-8")
-
+    print(f"Client ID: {fitbit_client_id}")
     url = "https://www.fitbit.com/oauth2/authorize"
     params = {
         "response_type": "code",
