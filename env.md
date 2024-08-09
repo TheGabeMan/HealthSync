@@ -11,3 +11,7 @@ wahoo_redirect_uri = 'https://www.yoururl.com'
 
 strava_athlete_id = 'sssss'
 strava_client_secret = 'cccccccccc'
+
+fitbit_client_id = 'cccccc'
+fitbit_client_secret = 'yyyyyyyyyyyyyyyyyyyyyyy'
+fitbit_token_url = 'https://api.fitbit.com/oauth2/token'

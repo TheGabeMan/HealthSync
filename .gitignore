@@ -133,6 +133,7 @@ dmypy.json
 withings.json
 wahoo.json
 strava.json
+fitbit.json
 .vscode/settings.json
 HealthSync.code-workspace
 healtsync/pyvenv.cfg

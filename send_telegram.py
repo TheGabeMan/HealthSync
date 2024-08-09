@@ -34,7 +34,7 @@ def send_telegram_message(message):
 
 
 def create_body_text(
-    user_weight, withings_read_ok, wahoo_send_ok, intervals_send_ok, strava_send_ok
+    user_weight, withings_read_ok, wahoo_send_ok, intervals_send_ok, strava_send_ok, fitbit_send_ok
 ):
     """Create a body text for the telegram message"""
     today = date.today().strftime("%d-%m-%Y")
@@ -47,4 +47,5 @@ def create_body_text(
     text += "Data sent to Wahoo " + str(wahoo_send_ok) + "\n"
     text += "Data sent to Intervals " + str(intervals_send_ok) + "\n"
     text += "Data sent to Strava " + str(strava_send_ok) + "\n"
+    text += "Data sent to Fitbit " + str(fitbit_send_ok) + "\n"
     return text
