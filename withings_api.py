@@ -98,6 +98,7 @@ def withings_refresh(token):
         json.dump(out["body"], open(withings_cfg, "w", encoding="utf8"))
         return out["body"]["access_token"]
     else:
+        print("Withings Refresh error")
         print(out)
         sys.exit()
 
