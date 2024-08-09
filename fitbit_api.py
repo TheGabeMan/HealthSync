@@ -3,13 +3,10 @@
     https://dev.fitbit.com/build/reference/web-api/troubleshooting-guide/oauth2-tutorial/
 """
 
-# from genericpath import isfile
 import json
 import logging
 import os
 import sys
-
-# import datetime
 from datetime import datetime
 import base64
 import webbrowser
@@ -17,8 +14,6 @@ import secrets
 import hashlib
 from dotenv import load_dotenv
 import requests
-
-# from requests.exceptions import Timeout
 
 load_dotenv()
 
@@ -34,19 +29,17 @@ urlDict = {
     "activities": "https://api.fitbit.com/1/user/-/activities/date/" + dateparam + ".json",
     "weight": "https://api.fitbit.com/1/user/-/body/log/weight/date/" + dateparam + ".json",
     "set_weight": "https://api.fitbit.com/1/user/-/body/log/weight.json",
+    "set_bodyfat": "https://api.fitbit.com/1/user/-/body/log/fat.json",
     "water": "https://api.fitbit.com/1/user/-/foods/log/date/" + dateparam + ".json",
     "sleep": "https://api.fitbit.com/1.2/user/-/sleep/date/" + dateparam + ".json",
     "user": "https://api.fitbit.com/1/user/-/profile.json",
     "heartrate": "https://api.fitbit.com/1/user/-/activities/heart/date/" + dateparam + "/1d.json",
 }
 
-
-def main():
-    """Main function for testing"""
-    fitbit_access_token = fitbit_read_user()
-    fitbit_set_weight(82, fitbit_access_token)
-    fitbit_introspect(fitbit_access_token)
-
+# # def main():
+#     """Main function for testing"""
+#     # fitbit_set_weight(user_weight, user_fat)
+#     # fitbit_introspect(fitbit_access_token)
 
 def fitbit_read_user():
     """Read user info info from fitbit"""
@@ -64,40 +57,75 @@ def fitbit_read_user():
     # urlDict["user"] = https://api.fitbit.com/1/user/-/profile.json
     response = requests.get(urlDict["user"], headers=headers, timeout=10)
     print("User info:", response.json()["user"]["fullName"])
-    print("User info:", response.json()["user"]["weight"])
+    logging.info("User info")
+    logging.info("User weight")
 
     # urlDict["weight"] = https://api.fitbit.com/1/user/-/body/log/weight/date/
     response = requests.get(urlDict["weight"], headers=headers, timeout=10)
-    print("Weight URL:", response.json()["weight"])
     return fitbit_access_token
 
 
-def fitbit_set_weight(weight, fitbit_access_token):
+def fitbit_set_weight(user_weight,user_fat):
     """Write user weight to fitbit"""
+    
+    ''' Get tokens '''
+    fitbit_access_token = fitbit_read_user()
     today = datetime.now().strftime("%Y-%m-%d")
-    data = {"weight": weight, "date": today}
-    content_length = len(str(data))
+
+    ''' Now writing body weight to fitbit '''
+    dataweight = {"weight": user_weight, "date": today}
+    content_length_weight = len(str(dataweight))
+
     headers = {
         "Authorization": f"Bearer {fitbit_access_token}",
         "accept": "application/json",
-        "content-length": str(content_length),
+        "content-length": str(content_length_weight),
     }
     response = requests.post(
-        urlDict["set_weight"], data=data, headers=headers, timeout=10
+        urlDict["set_weight"], data=dataweight, headers=headers, timeout=10
     )
-    print(response.json())
+    if response.status_code != 201:
+            print("There was an error writing to Fitbit API:")
+            logging.info("There was an error writing to Fitbit API:")
+            logging.info(response.json())
+            return False
+
+    print(f"Succesful writing weight {user_weight} to FitBit API")
+    logging.info("Succesful writing weight %s to FitBit API", user_weight)
+
+    ''' Now writing body fat to fitbit '''
+    datafat = {"fat": user_fat, "date": today}
+    content_length_fat = len(str(datafat))
+
+    headers = {
+        "Authorization": f"Bearer {fitbit_access_token}",
+        "accept": "application/json",
+        "content-length": str(content_length_weight),
+    }
+    response = requests.post(
+        urlDict["set_bodyfat"], data=datafat, headers=headers, timeout=10
+    )
+
+    if response.status_code != 201:
+            print("There was an error writing fat to Fitbit API:")
+            logging.info("There was an error writing fat to Fitbit API:")
+            logging.info(response.json())
+            return False
+
+    print(f"Succesful writing weight {user_fat} to FitBit API")
+    logging.info("Succesful writing weight %s to FitBit API", user_fat)
+    return True
+
 
 
 def fitbit_introspect(fitbit_access_token):
-    """check token permissions"""
+    """check token permissions for problem solving """
     url = "https://api.fitbit.com/1.1/oauth2/introspect"
     headers = {
         "Authorization": f"Bearer {fitbit_access_token}",
         "Content-Type": "application/x-www-form-urlencoded",
     }
     data = f"token={fitbit_access_token}"
-    print(data)
-
     response = requests.post(url, data=data, headers=headers, timeout=10)
     print(response.json())
 
@@ -131,7 +159,8 @@ def fitbit_refresh(token):
         return output["access_token"]
 
     print("Authenication failed")
-    print(output)
+    logging.info("Authenication failed")
+    logging.info(output)
     sys.exit()
 
 
@@ -155,9 +184,10 @@ def fitbit_authenticate():
     }
 
     response = requests.get(url, params=params, timeout=10)
+    
     webbrowser.open(response.url, new=2)
     fitbit_code = input(
-        "Copy the authorization code located between the code parameter name and the string #_=_"
+        "Copy the authorization code located between the code parameter name and the string #_=_     : "
     )
 
     params = {
@@ -175,14 +205,11 @@ def fitbit_authenticate():
         fitbit_token_url, params=params, headers=headers, timeout=10
     )
     output = response.json()
+    logging.info(response.json())
     if response.status_code == 200:
         json.dump(output, open(fitbit_cfg, "w", encoding="utf8"))
         return output["access_token"]
 
     print("Authenication failed")
-    print(output)
+    logging.info(output)
     sys.exit()
-
-
-if __name__ == "__main__":
-    sys.exit(main())

@@ -27,7 +27,8 @@ def get_withings_user_weight():
     """Read user weight from withings"""
     withings_data = get_withings_data()
     user_weight = withings_data["weight"]
-    return user_weight
+    user_fat = withings_data["bodyFat"]
+    return user_weight, user_fat
 
 
 def get_withings_data():
