@@ -112,7 +112,7 @@ def fitbit_set_weight(user_weight,user_fat):
             logging.info(response.json())
             return False
 
-    print(f"Succesful writing weight {user_fat} to FitBit API")
+    print(f"Succesful writing body fat {user_fat} to FitBit API")
     logging.info("Succesful writing weight %s to FitBit API", user_fat)
     return True
 
